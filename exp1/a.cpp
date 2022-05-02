@@ -264,11 +264,12 @@ void A_h1(const int start[5][5], const int target[5][5])
         {
             start_status->now[i][j] = start[i][j];
             // target_status->now[i][j] = target[i][j];
-            if (start_status->now[i][j] == 0) start_status->zero = i + j * 5;
+            if (start_status->now[i][j] == 0) start_status->zero = i * 5 + j;
             // if (target_status->now[i][j] == 0) target_status->zero = i + j * 5;
         }
     }
     start_status->h = h_1(start_status->now, target);
+    start_status->depth = 0;
     Q.push(start_status);
     while (!Q.empty())
     {
@@ -301,17 +302,17 @@ void A_h1(const int start[5][5], const int target[5][5])
             h_1(U->now, target);
             Q.push(U);
         }
-        if (D = up(next, D))
+        if (D = down(next, D))
         {
             h_1(U->now, target);
             Q.push(D);
         }
-        if (L = up(next, U))
+        if (L = left(next, L))
         {
             h_1(L->now, target);
             Q.push(L);
         }
-        if (R = up(next, U))
+        if (R = right(next, R))
         {
             h_1(R->now, target);
             Q.push(R);
