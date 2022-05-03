@@ -8,21 +8,24 @@
 #include<map>
 #include<queue>
 #include<vector>
+#include<stack>
 
-#define H_type int
+
 
 #define MAX 100000000
-
+#define OUT output_file
 
 using namespace std;
 void A_h1(const int start[5][5], const int target[5][5]);
 void A_h2(const int start[5][5], const int target[5][5]);
 void IDA_h1(const int start[5][5], const int target[5][5]);
 void IDA_h2(const int start[5][5], const int target[5][5]);
+ifstream start_file, target_file;
+ofstream output_file;
 struct status {
     int zero;
     int now[5][5];
-    H_type h;
+    int h;
     int depth;
     char path[50];
 };
@@ -41,9 +44,9 @@ struct status* status_init(status* p)
     p->depth = -1;
     return p;
 }
-H_type h_1(const int now[5][5], const int target[5][5])
+int h_1(const int now[5][5], const int target[5][5])
 {
-    H_type result = 0;
+    int result = 0;
     for (int i = 0;i < 5;i++)
     {
         for (int j = 0;j < 5;j++)
@@ -53,10 +56,33 @@ H_type h_1(const int now[5][5], const int target[5][5])
     }
     return result;
 }
-// H_type h_2(const int now[5][5], const int target[5][5])
-// {
-
-// }
+int h_2(const int now[5][5], const int target[5][5])
+{
+    int result = 0;
+    for(int i = 0;i < 5;i++)
+    {
+        for(int j = 0;j < 5;j++)
+        {
+            bool check = false;
+            for(int m = 0;m < 5;m++)
+            {
+                if(now[i][j] == target[i][m])
+                    check = true;
+            }
+            if(!check) 
+                result++;
+            check = false;
+            for(int m = 0;m < 5;m++)
+            {
+                if(now[i][j] == target[m][j])
+                    check = true;
+            }
+            if(!check) 
+                result++;
+        }
+    }
+    return result;
+}
 // struct status* move(status *p, )  
 
 status* up(status* p, status* target)
@@ -293,7 +319,8 @@ void A_h1(const int start[5][5], const int target[5][5])
         if (check)
         {
             next->path[next->depth] = '\0';
-            cout << next->path;
+            OUT << next->path;
+            OUT << ",";
             break;
         }
         status* U, * D, * L, * R;
@@ -324,15 +351,292 @@ void A_h1(const int start[5][5], const int target[5][5])
     }
     return;
 }
-
-int main(/*int argc, char *argv[]*/)
+void A_h2(const int start[5][5], const int target[5][5])
 {
-    ifstream start_file, target_file;
-    start_file.open("./data/input11.txt");
-    target_file.open("./data/target11.txt");
-    // if (start_file.is_open()) cout << "success\n";
+    priority_queue<status*, vector<status*>, cmp> Q;
+    status* start_status = NULL;
+    // status* target_status = NULL;
+    start_status = status_init(start_status);
+    start_status->depth = 0;
+    // target_status = status_init(target_status);
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5;j++)
+        {
+            start_status->now[i][j] = start[i][j];
+            // target_status->now[i][j] = target[i][j];
+            if (start_status->now[i][j] == 0) start_status->zero = i * 5 + j;
+            // if (target_status->now[i][j] == 0) target_status->zero = i + j * 5;
+        }
+    }
+    start_status->h = h_2(start_status->now, target);
+    start_status->depth = 0;
+    Q.push(start_status);
+    while (!Q.empty())
+    {
+        status* next = Q.top();
+        Q.pop();
+
+        bool check = true;
+        for (int i = 0;i < 5;i++)
+        {
+            for (int j = 0;j < 5;j++)
+            {
+                if (next->now[i][j] != target[i][j])
+                {
+                    check = false;
+                    break;
+                }
+            }
+            if (!check) break;
+        }
+
+        if (check)
+        {
+            next->path[next->depth] = '\0';
+            OUT << next->path;
+            OUT << ",";
+            break;
+        }
+        status* U, * D, * L, * R;
+
+        U = D = L = R = NULL;
+        if (U = up(next, U))
+        {
+            U->h = h_2(U->now, target);
+            Q.push(U);
+        }
+        if (R = right(next, R))
+        {
+            R->h = h_2(R->now, target);
+            Q.push(R);
+        }
+        if (D = down(next, D))
+        {
+            D->h = h_2(D->now, target);
+            Q.push(D);
+        }
+
+        if (L = left(next, L))
+        {
+            L->h = h_2(L->now, target);
+            Q.push(L);
+        }
+
+    }
+    return;
+}
+
+void IDA_h1(const int start[5][5], const int target[5][5])
+{
+    status* start_status = NULL;
+    // status* target_status = NULL;
+    start_status = status_init(start_status);
+    start_status->depth = 0;
+    // target_status = status_init(target_status);
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5;j++)
+        {
+            start_status->now[i][j] = start[i][j];
+            // target_status->now[i][j] = target[i][j];
+            if (start_status->now[i][j] == 0) start_status->zero = i * 5 + j;
+            // if (target_status->now[i][j] == 0) target_status->zero = i + j * 5;
+        }
+    }
+    start_status->h = h_1(start_status->now, target);
+    start_status->depth = 0;
+    stack<status*> S;
+    int f_limit = start_status->h + start_status->depth;
+    while(f_limit < MAX)
+    {
+        int next_f_limit = MAX;
+        S.push(start_status);
+        while(!S.empty())
+        {
+            status * next;
+            next = S.top();
+            S.pop();
+            if(next->depth + next->h > f_limit)
+                next_f_limit = min(next_f_limit, next->depth + next->h);
+            else
+            {
+                bool check = true;
+                for (int i = 0;i < 5;i++)
+                {
+                    for (int j = 0;j < 5;j++)
+                    {
+                        if (next->now[i][j] != target[i][j])
+                        {
+                            check = false;
+                            break;
+                        }
+                    }
+                    if (!check) break;    
+                }
+                if (check)
+                {
+                    next->path[next->depth] = '\0';
+                    OUT << next->path;
+                    OUT << ",";
+                    return;
+                }
+                status* U, * D, * L, * R;
+                U = D = L = R = NULL;
+                if (U = up(next, U))
+                {
+                    U->h = h_1(U->now, target);
+                    S.push(U);
+                }
+                if (R = right(next, R))
+                {
+                    R->h = h_1(R->now, target);
+                    S.push(R);
+                }
+                if (D = down(next, D))
+                {
+                    D->h = h_1(D->now, target);
+                    S.push(D);
+                }
+
+                if (L = left(next, L))
+                {
+                    L->h = h_1(L->now, target);
+                    S.push(L);
+                }
+            }
+        }
+        f_limit = next_f_limit;
+    }
+    return;
+}
+void IDA_h2(const int start[5][5], const int target[5][5])
+{
+    status* start_status = NULL;
+    // status* target_status = NULL;
+    start_status = status_init(start_status);
+    start_status->depth = 0;
+    // target_status = status_init(target_status);
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5;j++)
+        {
+            start_status->now[i][j] = start[i][j];
+            // target_status->now[i][j] = target[i][j];
+            if (start_status->now[i][j] == 0) start_status->zero = i * 5 + j;
+            // if (target_status->now[i][j] == 0) target_status->zero = i + j * 5;
+        }
+    }
+    start_status->h = h_2(start_status->now, target);
+    start_status->depth = 0;
+    stack<status*> S;
+    int f_limit = start_status->h + start_status->depth;
+    while(f_limit < MAX)
+    {
+        int next_f_limit = MAX;
+        S.push(start_status);
+        while(!S.empty())
+        {
+            status * next;
+            next = S.top();
+            S.pop();
+            if(next->depth + next->h > f_limit)
+                next_f_limit = min(next_f_limit, next->depth + next->h);
+            else
+            {
+                bool check = true;
+                for (int i = 0;i < 5;i++)
+                {
+                    for (int j = 0;j < 5;j++)
+                    {
+                        if (next->now[i][j] != target[i][j])
+                        {
+                            check = false;
+                            break;
+                        }
+                    }
+                    if (!check) break;    
+                }
+                if (check)
+                {
+                    next->path[next->depth] = '\0';
+                    OUT << next->path;
+                    OUT << ",";
+                    return;
+                }
+                status* U, * D, * L, * R;
+                U = D = L = R = NULL;
+                if (U = up(next, U))
+                {
+                    U->h = h_2(U->now, target);
+                    S.push(U);
+                }
+                if (R = right(next, R))
+                {
+                    R->h = h_2(R->now, target);
+                    S.push(R);
+                }
+                if (D = down(next, D))
+                {
+                    D->h = h_2(D->now, target);
+                    S.push(D);
+                }
+
+                if (L = left(next, L))
+                {
+                    L->h = h_2(L->now, target);
+                    S.push(L);
+                }
+            }
+        }
+        f_limit = next_f_limit;
+    }
+    return;
+}
+int main(int argc, char *argv[])
+{
+    LARGE_INTEGER t1, t2, tc;
+    double time;
+    if(argc != 4)
+    {
+        cout << "argument number error!" << endl; 
+        return 0;
+    }
+
+    int mode = -1;
+    if(strcmp(argv[1], "A_h1") == 0)
+        mode = 0;
+    else if(strcmp(argv[1], "A_h2") == 0)
+        mode = 1;
+    else if(strcmp(argv[1], "IDA_h1") == 0)
+        mode = 2;
+    else if(strcmp(argv[1], "IDA_h2") == 0)
+        mode = 3;
+    else
+    {
+        cout << "wrong argument!" << endl;
+        return 0;
+    }
+        
+    char start_path[50];
+    char target_path[50];
+    char output_path[50];
+    strcpy(start_path, "./data/");
+    strcat(start_path, argv[2]);
+    strcpy(target_path, "./data/");
+    strcat(target_path, argv[3]);
+    strcpy(output_path, "./data/output_");
+    strcat(output_path, argv[1]);
+    strcat(output_path, ".txt");
 
 
+    start_file.open(start_path);
+    target_file.open(target_path);
+    output_file.open(output_path, ofstream::app);
+    // if (start_file.is_open()) OUT << "success\n";
+
+    // if(start_file)
+    //     OUT << "unable to open the file" << endl;
     int start[5][5];
     int target[5][5];
     // start = status_init(start);
@@ -346,10 +650,28 @@ int main(/*int argc, char *argv[]*/)
             target_file >> target[i][j];
         }
     }
-    A_h1(start, target);
-
+    for(int times = 0; times < 12; times++)
+    {
+        QueryPerformanceFrequency(&tc);
+        QueryPerformanceCounter(&t1);
+        switch (mode)
+        {
+            case 0:A_h1(start, target); break;
+            case 1:A_h2(start, target); break;
+            case 2:IDA_h1(start, target); break;
+            case 3:IDA_h2(start, target); break;    
+            default: return 0;
+            break;
+        }
+        QueryPerformanceCounter(&t2);
+        double time = (double)(t2.QuadPart - t1.QuadPart) / (double)tc.QuadPart;
+        OUT << time << endl;
+    }
+    // A_h1(start, target);
+    // A_h2(start, target);
+    // IDA_h1(start, target);
     start_file.close();
     target_file.close();
-
+    output_file.close();
     return 0;
 }
