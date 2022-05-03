@@ -29,7 +29,7 @@ struct status {
 struct cmp {
     bool operator()(status* a, status* b)
     {
-        return ((a->h + a->depth) >= (b->h + b->depth));
+        return ((a->h + a->depth) > (b->h + b->depth));
     }
 
 };
@@ -292,31 +292,35 @@ void A_h1(const int start[5][5], const int target[5][5])
 
         if (check)
         {
+            next->path[next->depth] = '\0';
             cout << next->path;
             break;
         }
         status* U, * D, * L, * R;
+
         U = D = L = R = NULL;
         if (U = up(next, U))
         {
-            h_1(U->now, target);
+            U->h = h_1(U->now, target);
             Q.push(U);
-        }
-        if (D = down(next, D))
-        {
-            h_1(U->now, target);
-            Q.push(D);
-        }
-        if (L = left(next, L))
-        {
-            h_1(L->now, target);
-            Q.push(L);
         }
         if (R = right(next, R))
         {
-            h_1(R->now, target);
+            R->h = h_1(R->now, target);
             Q.push(R);
         }
+        if (D = down(next, D))
+        {
+            D->h = h_1(D->now, target);
+            Q.push(D);
+        }
+
+        if (L = left(next, L))
+        {
+            L->h = h_1(L->now, target);
+            Q.push(L);
+        }
+
     }
     return;
 }
