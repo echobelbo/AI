@@ -59,25 +59,25 @@ int h_1(const int now[5][5], const int target[5][5])
 int h_2(const int now[5][5], const int target[5][5])
 {
     int result = 0;
-    for(int i = 0;i < 5;i++)
+    for (int i = 0;i < 5;i++)
     {
-        for(int j = 0;j < 5;j++)
+        for (int j = 0;j < 5;j++)
         {
             bool check = false;
-            for(int m = 0;m < 5;m++)
+            for (int m = 0;m < 5;m++)
             {
-                if(now[i][j] == target[i][m])
+                if (now[i][j] == target[i][m])
                     check = true;
             }
-            if(!check) 
+            if (!check)
                 result++;
             check = false;
-            for(int m = 0;m < 5;m++)
+            for (int m = 0;m < 5;m++)
             {
-                if(now[i][j] == target[m][j])
+                if (now[i][j] == target[m][j])
                     check = true;
             }
-            if(!check) 
+            if (!check)
                 result++;
         }
     }
@@ -448,16 +448,16 @@ void IDA_h1(const int start[5][5], const int target[5][5])
     start_status->depth = 0;
     stack<status*> S;
     int f_limit = start_status->h + start_status->depth;
-    while(f_limit < MAX)
+    while (f_limit < MAX)
     {
         int next_f_limit = MAX;
         S.push(start_status);
-        while(!S.empty())
+        while (!S.empty())
         {
-            status * next;
+            status* next;
             next = S.top();
             S.pop();
-            if(next->depth + next->h > f_limit)
+            if (next->depth + next->h > f_limit)
                 next_f_limit = min(next_f_limit, next->depth + next->h);
             else
             {
@@ -472,7 +472,7 @@ void IDA_h1(const int start[5][5], const int target[5][5])
                             break;
                         }
                     }
-                    if (!check) break;    
+                    if (!check) break;
                 }
                 if (check)
                 {
@@ -531,16 +531,16 @@ void IDA_h2(const int start[5][5], const int target[5][5])
     start_status->depth = 0;
     stack<status*> S;
     int f_limit = start_status->h + start_status->depth;
-    while(f_limit < MAX)
+    while (f_limit < MAX)
     {
         int next_f_limit = MAX;
         S.push(start_status);
-        while(!S.empty())
+        while (!S.empty())
         {
-            status * next;
+            status* next;
             next = S.top();
             S.pop();
-            if(next->depth + next->h > f_limit)
+            if (next->depth + next->h > f_limit)
                 next_f_limit = min(next_f_limit, next->depth + next->h);
             else
             {
@@ -555,7 +555,7 @@ void IDA_h2(const int start[5][5], const int target[5][5])
                             break;
                         }
                     }
-                    if (!check) break;    
+                    if (!check) break;
                 }
                 if (check)
                 {
@@ -593,31 +593,31 @@ void IDA_h2(const int start[5][5], const int target[5][5])
     }
     return;
 }
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     LARGE_INTEGER t1, t2, tc;
     double time;
-    if(argc != 4)
+    if (argc != 4)
     {
-        cout << "argument number error!" << endl; 
+        cout << "argument number error!" << endl;
         return 0;
     }
 
     int mode = -1;
-    if(strcmp(argv[1], "A_h1") == 0)
+    if (strcmp(argv[1], "A_h1") == 0)
         mode = 0;
-    else if(strcmp(argv[1], "A_h2") == 0)
+    else if (strcmp(argv[1], "A_h2") == 0)
         mode = 1;
-    else if(strcmp(argv[1], "IDA_h1") == 0)
+    else if (strcmp(argv[1], "IDA_h1") == 0)
         mode = 2;
-    else if(strcmp(argv[1], "IDA_h2") == 0)
+    else if (strcmp(argv[1], "IDA_h2") == 0)
         mode = 3;
     else
     {
         cout << "wrong argument!" << endl;
         return 0;
     }
-        
+
     char start_path[50];
     char target_path[50];
     char output_path[50];
@@ -650,23 +650,23 @@ int main(int argc, char *argv[])
             target_file >> target[i][j];
         }
     }
-    for(int times = 0; times < 12; times++)
-    {
+    //for (int times = 0; times < 12; times++)
+    //{
         QueryPerformanceFrequency(&tc);
         QueryPerformanceCounter(&t1);
         switch (mode)
         {
-            case 0:A_h1(start, target); break;
-            case 1:A_h2(start, target); break;
-            case 2:IDA_h1(start, target); break;
-            case 3:IDA_h2(start, target); break;    
-            default: return 0;
+        case 0:A_h1(start, target); break;
+        case 1:A_h2(start, target); break;
+        case 2:IDA_h1(start, target); break;
+        case 3:IDA_h2(start, target); break;
+        default: return 0;
             break;
         }
         QueryPerformanceCounter(&t2);
-        double time = (double)(t2.QuadPart - t1.QuadPart) / (double)tc.QuadPart;
+        time = (double)(t2.QuadPart - t1.QuadPart) / (double)tc.QuadPart;
         OUT << time << endl;
-    }
+    //}
     // A_h1(start, target);
     // A_h2(start, target);
     // IDA_h1(start, target);
