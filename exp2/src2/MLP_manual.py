@@ -1,0 +1,140 @@
+from pickletools import optimize
+import torch
+import numpy as np
+from matplotlib import pyplot as plt
+
+class MLP:
+    def __init__(self):
+        # layer size = [10, 8, 8, 4]
+        # 初始化所需参数
+        self.x = np.zeros((1,10))
+        self.W1 = np.random.uniform(0, 0.3, (10, 10))
+        self.b1 = np.random.uniform(0, 0.3, (1,10))
+        self.W2 = np.random.uniform(0, 0.3, (10, 8))
+        self.b2 = np.random.uniform(0, 0.3, (1,8))
+        self.W3 = np.random.uniform(0, 0.3, (8, 8))
+        self.b3 = np.random.uniform(0, 0.3, (1,8))
+        self.W4 = np.random.uniform(0, 0.3, (8, 4))
+        self.b4 = np.random.uniform(0, 0.3, (1,4))
+        # temp = np.zeros(4)
+        self.u1 = np.zeros((1,10))
+        self.u2 = np.zeros((1,8))
+        self.u3 = np.zeros((1,8))
+        self.u4 = np.zeros((1,4))
+
+        self.y1 = np.zeros((1,10))
+        self.y2 = np.zeros((1,8))
+        self.y3 = np.zeros((1,8))
+        self.y4 = np.zeros((1,4))
+        self.loss = 0.0
+        self.loss_torch = 0.0
+        # self.y =  np.exp(temp) / np.sum(np.exp(temp)) 
+
+        pass
+
+    def forward(self, x):
+        # 前向传播
+        self.x = x.reshape((1,10))
+        # print(self.x)
+        self.u1 = self.x@self.W1 + self.b1
+        # print(self.u1)
+        self.y1 = np.tanh(self.u1)
+        # print(self.y1)
+        # print(self.)
+        self.u2 = self.y1@self.W2 + self.b2
+        # print(self.u2)
+        self.y2 = np.tanh(self.u2)
+        self.u3 = self.y2@self.W3 + self.b3
+        self.y3 = np.tanh(self.u3)
+        self.u4 = self.y3@self.W4 + self.b4
+        # print(self.u4)
+        self.y4 = np.exp(self.u4) / np.sum(np.exp(self.u4))
+        # print(self.y4)
+        pass
+
+    def backward(self, labels, lr): # 自行确定参数表
+        self.loss = CrossEntropyLoss_my(self.y4, labels)
+        # print("IN")
+        # print(self.b1, self.b2, self.b3, self.b4)
+        # print(self.W1, self.W2, self.W3, self.W4)
+        # print (self.loss)
+        delta4 = self.y4-labels
+        self.b4 = self.b4 - lr * delta4
+        # print(self.y3, delta4)
+        dW4 = lr * (self.y3.T @ delta4)
+        delta3 = (delta4 @ self.W4.T) * (1-self.y3*self.y3)
+        self.b3 = self.b3 - lr * delta3
+        dW3 = lr * (self.y2.T @ delta3)
+        delta2 = (delta3 @ self.W3.T) * (1-self.y2*self.y2)
+        self.b2 = self.b2 - lr * delta2
+        dW2 = lr * (self.y1.T @ delta2)
+        delta1 = (delta2 @ self.W2.T) * (1-self.y1*self.y1)
+        # print(delta1, delta2, delta3, delta4)
+        self.b1 = self.b1 - lr * delta1
+        dW1 = lr * (self.x.T @ delta1)
+        self.W1 -= dW1
+        self.W2 -= dW2
+        self.W3 -= dW3
+        self.W4 -= dW4
+        # print(self.b1, self.b2, self.b3, self.b4)
+        # print(self.W1, self.W2, self.W3, self.W4)
+        # print("OUT")
+        # 反向传播
+        pass
+    
+    def backward_torch(self, labels, lr):
+
+        optimizer.zero_grad()
+        My_loss = torch.nn.CrossEntropyLoss()
+        LOSS = My_loss(torch.from_numpy(self.y4.T), torch.from_numpy(labels.T))
+        LOSS.backward()
+        self.loss_torch = LOSS.data.sum()*labels.size(0)
+        
+def CrossEntropyLoss_my(y, labels):
+    return -np.dot(np.log(y), labels)
+
+def train(mlp: MLP, epochs, lr, inputs, labels):
+    '''
+        mlp: 传入实例化的MLP模型
+        epochs: 训练轮数
+        lr: 学习率
+        inputs: 生成的随机数据
+        labels: 生成的one-hot标签
+    '''
+    Loss = []
+    Loss_torch = []
+    for epoch in range(epochs):
+        loss = 0
+        loss_torch = 0
+        for i in range(inputs.shape[0]):
+            mlp.forward(inputs[i, :])
+            mlp.backward(labels[i, :], lr)
+            mlp.backward_torch(labels[i, :], lr)
+            loss += mlp.loss
+            loss_torch += mlp.loss_torch
+        Loss.append(loss)
+        Loss_torch.append(loss_torch)
+    return Loss, Loss_torch
+
+
+if __name__ == '__main__':
+    # 设置随机种子,保证结果的可复现性
+    np.random.seed(1)
+    mlp = MLP()
+    # 生成数据
+    inputs = np.random.randn(100, 10)
+
+    # 生成one-hot标签
+    labels = np.eye(4)[np.random.randint(0, 4, size=(1, 100))].reshape(100, 4)
+
+    # 训练
+    epochs = 1000
+    lr = 0.03
+    l, l_t= train(mlp, epochs, lr, inputs, labels)
+    for i in range(len(l)):
+        print(i, l[i], l_t[i])
+    fig, ax = plt.subplots()
+    fig, bx = plt.subplots()
+    ax.plot(np.array(l))
+    bx.plot(np.array(l_t))
+    plt.show()
