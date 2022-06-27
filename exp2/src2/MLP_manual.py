@@ -1,9 +1,30 @@
+from cProfile import label
 from pickletools import optimize
 import torch
+import torch.nn as nn
 import numpy as np
+import torch.nn.functional as F
 from matplotlib import pyplot as plt
+class pytorch_MLP(nn.Module):
+    def __init__(self):
+        super(pytorch_MLP,self).__init__()
+        ########################################################################
+        #这里需要写MyNet的卷积层、池化层和全连接层
+        self.fc1 = nn.Linear(10, 10)
+        self.fc2 = nn.Linear(10, 8)
+        self.fc3 = nn.Linear(8, 8)
+        self.fc4 = nn.Linear(8, 4)
 
-class MLP:
+    def forward(self, x):
+        ########################################################################
+        #这里需要写MyNet的前向传播
+        # print(x)
+        x = F.tanh(self.fc1(x))
+        x = F.tanh(self.fc2(x))
+        x = F.tanh(self.fc3(x))
+        # x = F.softmax(self.fc4(x))
+        return self.fc4(x)   
+class MLP():
     def __init__(self):
         # layer size = [10, 8, 8, 4]
         # 初始化所需参数
@@ -82,13 +103,23 @@ class MLP:
         # 反向传播
         pass
     
-    def backward_torch(self, labels, lr):
+    # def backward_torch(self, labels, lr):
 
-        optimizer.zero_grad()
-        My_loss = torch.nn.CrossEntropyLoss()
-        LOSS = My_loss(torch.from_numpy(self.y4.T), torch.from_numpy(labels.T))
-        LOSS.backward()
-        self.loss_torch = LOSS.data.sum()*labels.size(0)
+    #     # My_loss = torch.nn.CrossEntropyLoss()
+    #     # LOSS = My_loss(torch.tensor(self.y4.T).float(), torch.tensor(labels.T).float())
+    #     # print(self.y4, labels)
+    #     # optimizeer = torch.optim.Adam(self.parameters(), )
+    #     output = torch.log(torch.tensor(self.y4).float())
+    #     labels_ = torch.tensor(labels).reshape(4,1).float()
+    #     # print(output.shape[1], labels_.shape[1])
+    #     # print(output, labels)
+    #     # print("123")
+    #     # print(torch.mm(output, labels_))
+    #     LOSS = -torch.tensor(torch.mm(output, labels_), requires_grad = True)
+    #     # print(LOSS)
+    #     LOSS.backward()
+    #     self.loss_torch = LOSS.data.sum().item()
+    #     # print(self.loss_torch)
         
 def CrossEntropyLoss_my(y, labels):
     return -np.dot(np.log(y), labels)
@@ -102,21 +133,34 @@ def train(mlp: MLP, epochs, lr, inputs, labels):
         labels: 生成的one-hot标签
     '''
     Loss = []
-    Loss_torch = []
     for epoch in range(epochs):
         loss = 0
-        loss_torch = 0
+        # loss_torch = 0
         for i in range(inputs.shape[0]):
             mlp.forward(inputs[i, :])
             mlp.backward(labels[i, :], lr)
-            mlp.backward_torch(labels[i, :], lr)
+            # mlp.backward_torch(labels[i, :], lr)
             loss += mlp.loss
-            loss_torch += mlp.loss_torch
-        Loss.append(loss)
-        Loss_torch.append(loss_torch)
-    return Loss, Loss_torch
+            # loss_torch += mlp.loss_torch
+            # print(loss_torch)
+        Loss.append(loss/inputs.shape[0])
+        # Loss_torch.append(loss_torch/inputs.shape[0])
+    return Loss
 
-
+def pytorch_train(net, train_loader, labels, epochs, optimizer, loss_function):
+    # train_loader = torch.tensor(train_loader).float
+    # labels = torch.tensor(labels)
+    net.train()
+    result = []
+    for epoch in range(epochs):
+        optimizer.zero_grad()
+        # print(train_loader)
+        outputs = net.forward(train_loader)
+        loss = loss_function(outputs, labels)
+        result.append(loss.item())
+        loss.backward()
+        optimizer.step()
+    return result
 if __name__ == '__main__':
     # 设置随机种子,保证结果的可复现性
     np.random.seed(1)
@@ -128,13 +172,18 @@ if __name__ == '__main__':
     labels = np.eye(4)[np.random.randint(0, 4, size=(1, 100))].reshape(100, 4)
 
     # 训练
+    
     epochs = 1000
-    lr = 0.03
-    l, l_t= train(mlp, epochs, lr, inputs, labels)
-    for i in range(len(l)):
-        print(i, l[i], l_t[i])
+    lr = 0.02
+    net = pytorch_MLP()
+    l = train(mlp, epochs, lr, inputs, labels)
+    optimizer = torch.optim.Adam(net.parameters(),lr)
+    loss_function = nn.CrossEntropyLoss()
+    torch_l = pytorch_train(net, torch.from_numpy(inputs).float(), torch.from_numpy(labels), epochs, optimizer, loss_function)
+    # print(mlp.W1)
+    # for i in range(len(l)):
+    #     print(i, l[i], torch_l[i])
     fig, ax = plt.subplots()
-    fig, bx = plt.subplots()
-    ax.plot(np.array(l))
-    bx.plot(np.array(l_t))
+    ax.plot(np.array(l), color='red')
+    ax.plot(np.array(torch_l), color='blue')
     plt.show()
